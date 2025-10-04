@@ -37,7 +37,7 @@ As of 1.3.0, alerts can be sent when ever time is added or removed. This is a di
 Assuming your user is named "Adnan", and they added 15 minutes and had 1 hours and 2 minutes left, the alert would look like this:
 
 > **Timekpr: Adnan added 15 minutes**
-> 
+>
 > removed 15 minutes, 1 hours and 2 minutes remaining :)
 
 ## Install
@@ -52,8 +52,8 @@ Assuming your user is named "Adnan", and they added 15 minutes and had 1 hours a
 ### Server
 
 1. clone this repo
-2. copy `conf.example.py` to `conf.py`
-3. edit `conf.py` per [Settings section](#Settings) below
+2. copy `conf.example.yaml` to `conf.yaml`
+3. edit `conf.yaml` per [Settings section](#Settings) below
 4. run `docker compose up -d`
 5. go to `http://your-server-IP:8080` on your phone or desktop
 
@@ -61,7 +61,7 @@ Assuming your user is named "Adnan", and they added 15 minutes and had 1 hours a
 
 Follow these steps for on each client you want to control:
 
-1. Add a new `timekpr-next-remote` user to each machine you want to manage. 
+1. Add a new `timekpr-next-remote` user to each machine you want to manage.
 2. Set the password for  `timekpr-next-remote` to be the same as step 3 above, so it matches the config value of `ssh_password`
 3. Add the `timekpr-next-remote` to the `timekpr` group: `sudo gpasswd -a timekpr-next-remote timekpr`
 4. Restart to ensure the group change took effect
@@ -69,15 +69,15 @@ Follow these steps for on each client you want to control:
 
 ## Settings
 
-Whenever you're editing setting, use care.  It's actually a python file, so you can cause the app to crash if you have an invalid config file.
+Configuration is managed through a YAML file for easy editing and readability.
 
-### `conf.py`
+### `conf.yaml`
 
-* `trackme` - python object to store all the folks you want to manage
-* `ssh_user` - user to SSH into client machines as. Defaults to  `timekpr-next-remote`
-* `ssh_password` - password to use wen SSHing into client machines. Defaults to  `timekpr-next-remote`
-* `ssh_timekpra_bin` - path on clients where `timekpra` executable is. defaults to  `/usr/bin/timekpra`
-`ssh_key` - wtf - I don't know, SSH library wouldn't work with out this.  don't touch this
+* `trackme` - Dictionary mapping computer IPs to lists of usernames you want to manage
+* `ssh.user` - User to SSH into client machines as. Defaults to  `timekpr-next-remote`
+* `ssh.password` - Password to use when SSHing into client machines. Defaults to  `timekpr-next-remote`
+* `ssh.timekpra_bin` - Path on clients where `timekpra` executable is. Defaults to  `/usr/bin/timekpra`
+* `ssh.key` - Path to SSH key file (currently not implemented)
 
 #### Optional Gotify alerts
 
@@ -85,23 +85,17 @@ These are optional!  Ignore if you don't want to send alerts.
 
 If you do want to set up alerts, go create a new app in  your Gotify instance and get the token to send alerts. You can add as many Gotify instances as you want.  By allowing more than one, administrators with their own Gotify user can get alerts.  Or more simply, send one alert and administrators can share an account.
 
-`gotify` - This is an array of Gotify instances that looks like this:
+`gotify` - This is a list of Gotify instances that looks like this:
 
-```python
-gotify =[
-    # set to True to enable, update with you token and URL
-    {
-        'enabled': False,
-        'token': 'token1-here',
-        'url': 'http://url1-here.com'
-    },
-    # Uncomment if you want to send alerts to more than one user - add as many as you'd like!
-    # {
-    #     'enabled': False,
-    #     'token': 'token1-here',
-    #     'url': 'http://url2-here.com'
-    # }
-]
+```yaml
+gotify:
+  - enabled: false
+    token: token1-here
+    url: http://url1-here.com
+  # Uncomment if you want to send alerts to more than one user - add as many as you'd like!
+  # - enabled: false
+  #   token: token2-here
+  #   url: http://url2-here.com
 ```
 
 For each instance, set:
@@ -111,8 +105,95 @@ For each instance, set:
 
 ### docker compose
 
+Environment variables that can be set:
+
 * `TIMEKPR_PORT` - the port that docker compose will expose the service on. Defaults to `8080`
 * `TIMEKPR_IP` - the IP that docker compose will bind the web server to.  Good for binding to a private IP that only other docker containers can see (like a reverse proxy!). Defaults to `0.0.0.0`.
+* `TIMEKPR_TZ` - the timezone for the container. Defaults to `America/Los_Angeles`.
+
+## Docker
+
+### Building the Docker image
+
+The Dockerfile uses Poetry to build and install the application as a proper Python package:
+
+```bash
+docker build -t timekpr-next-remote .
+```
+
+### Running with Docker
+
+Run the container with your configuration file mounted as a volume:
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -v $(pwd)/conf.yaml:/app/conf.yaml \
+  -e TZ=America/Los_Angeles \
+  --name timekpr-next-remote \
+  timekpr-next-remote
+```
+
+### Running with docker compose
+
+The easiest way to run is with docker compose.
+
+> **Note**: If you get `docker: unknown command: docker compose`, you may need to:
+> - Use `sudo` before the command: `sudo docker compose`
+> - Or install the Docker Compose plugin: `sudo apt install docker-compose-plugin`
+> - Or use the standalone `docker-compose` command if you have the legacy version installed
+
+First, build the image:
+
+```bash
+docker compose build
+# or with sudo:
+sudo docker compose build
+```
+
+Then start the service:
+
+```bash
+docker compose up -d
+# or with sudo:
+sudo docker compose up -d
+```
+
+This will:
+- Build the image using Poetry
+- Mount your `conf.yaml` file into the container
+- Expose the web interface on the configured port (default: 8080)
+- Restart the container automatically unless stopped
+
+To view logs:
+
+```bash
+docker compose logs -f
+# or: sudo docker compose logs -f
+```
+
+To rebuild and restart after code changes:
+
+```bash
+docker compose up -d --build
+# or: sudo docker compose up -d --build
+```
+
+To stop:
+
+```bash
+docker compose down
+# or: sudo docker compose down
+```
+
+### Docker image details
+
+The Docker image:
+- Uses Python 3.12-slim as the base
+- Installs the application using Poetry (no dev dependencies)
+- Includes the example configuration as fallback
+- Runs the application using the Poetry script entrypoint
+- Requires mounting your `conf.yaml` file for actual use
 
 ## Security
 
@@ -144,15 +225,71 @@ By design, this system is very secure as far as controlling clients over SSH, bu
 
 ## Development
 
+### Setting up the development environment
+
+This project uses Poetry for dependency management. Install dependencies with:
+
+```bash
+poetry install
+```
+
+### Running the application locally
+
+```bash
+poetry run timekpr-next-web
+```
+
+Or directly with Python:
+
+```bash
+poetry run python timekpr/timekpr_next_web.py
+```
+
+### Code quality and linting
+
+This project uses tox to manage code quality checks. Run all checks with:
+
+```bash
+poetry run tox
+```
+
+Or run specific checks:
+
+```bash
+# Run flake8 linting
+poetry run tox -e flake8
+
+# Run black code formatting check
+poetry run tox -e black
+
+# Run isort import sorting check
+poetry run tox -e isort
+
+# Run all linting checks together
+poetry run tox -e lint
+```
+
+To automatically fix formatting issues:
+
+```bash
+# Format code with black
+poetry run black timekpr/
+
+# Sort imports with isort
+poetry run isort timekpr/
+```
+
+### Testing with Timekpr clients
+
 Development can be done using locally running [LXD](https://canonical.com/blog/lxd-virtual-machines-an-overview) or [Incus](https://linuxcontainers.org/incus/) containers. After launching an Ubuntu 22.04 container, SSH is enable by default, but only allows key access, so be sure to add your public keys as needed.  From there `adduser` a new user, then run this to install timekpr:
 
-```
+```bash
 sudo apt install software-properties-common
 sudo add-apt-repository ppa:mjasnik/ppa
 sudo apt update
 sudo apt install timekpr-next x11-apps
 ```
 
-You can then `ssh -X USER@IP` and then run `timekpra` to configure your test users in timekpr via a GUI.  
+You can then `ssh -X USER@IP` and then run `timekpra` to configure your test users in timekpr via a GUI.
 
 During development, it's nice to watch the times for a specific user with `watch -n 1 timekpra --userinfo USERNAME`

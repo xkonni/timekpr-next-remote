@@ -1,0 +1,20 @@
+trackme:
+  10.220.249.232:
+    - mrjones
+
+ssh:
+  user: timekpr-next-remote
+  password: timekpr-next-remote
+  timekpra_bin: /usr/bin/timekpra
+  key: ./id_timekpr
+
+gotify:
+  # set to True to enable, update with your token and URL
+  - enabled: false
+    token: token1-here
+    url: http://url1-here.com
+  # Uncomment if you want to send alerts to more than one user.
+  # Copy and paste these lines to add more alert destinations.
+  # - enabled: false
+  #   token: token1-here
+  #   url: http://url2-here.com

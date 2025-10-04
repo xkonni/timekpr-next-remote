@@ -1,5 +1,0 @@
-fabric
-paramiko
-flask
-gotify
-humanize
