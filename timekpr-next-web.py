@@ -32,7 +32,13 @@ def get_usage(computer, user):
         return validate_request(computer, user), 500
     ssh = main.get_connection(computer)
     usage = main.get_usage(user, computer, ssh)
-    return {'result': usage['result'], "time_left": usage['time_left'], "time_spent": usage['time_spent']}, 200
+    return {
+        'result': usage['result'],
+        'time_left': usage['time_left'],
+        'time_spent': usage['time_spent'],
+        'playtime_left': usage.get('playtime_left', 0),
+        'playtime_spent': usage.get('playtime_spent', 0),
+    }, 200
 
 
 @app.route("/increase_time/<computer>/<user>/<seconds>")
@@ -59,10 +65,34 @@ def decrease_time(computer, user, seconds):
         return {'result': "fail"}, 500
 
 
+@app.route("/increase_playtime/<computer>/<user>/<seconds>")
+def increase_playtime(computer, user, seconds):
+    if validate_request(computer, user)['result'] == "fail":
+        return validate_request(computer, user), 500
+    ssh = main.get_connection(computer)
+    if main.increase_playtime(seconds, ssh, user, computer):
+        usage = main.get_usage(user, computer, ssh)
+        return {'result': "success", "playtime_left": usage['playtime_left'], "playtime_spent": usage['playtime_spent']}, 200
+    else:
+        return {'result': "fail"}, 500
+
+
+@app.route("/decrease_playtime/<computer>/<user>/<seconds>")
+def decrease_playtime(computer, user, seconds):
+    if validate_request(computer, user)['result'] == "fail":
+        return validate_request(computer, user), 500
+    ssh = main.get_connection(computer)
+    if main.decrease_playtime(seconds, ssh, user, computer):
+        usage = main.get_usage(user, computer, ssh)
+        return {'result': "success", "playtime_left": usage['playtime_left'], "playtime_spent": usage['playtime_spent']}, 200
+    else:
+        return {'result': "fail"}, 500
+
+
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-        'favicon.ico',mimetype='image/vnd.microsoft.icon')
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

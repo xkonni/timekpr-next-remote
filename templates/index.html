@@ -184,20 +184,26 @@
                 $("#people").append(
                     "<span class='user' id='" + user + rand_dom + "'>" +
                         "<p  class='h3'>" + user + "<span class='notify loading'></span></p>" +
-                        "<span class='time_wrapper'>" +
-                            "Unused: <span class='time time_left'>...</span> " +
-                            "Used: " +
-                                "<span class='time time_spent'>...</span>" +
+                        "Time <span class='time_wrapper'>" +
+                            "used: " + "<span class='time time_spent'>...</span>" +
+                            " unused: <span class='time time_left'>...</span> " +
+                        "Playtime <span class='time_wrapper'>" +
+                            "used: " + "<span class='time playtime_spent'>...</span>" +
+                            " unused: <span class='time playtime_left'>...</span> " +
                         "</span><br/>" +
                         "<div class='btn-group' role='group' aria-label='Action'>" +
-                            "<input type='radio'  class='btn-check' id='add" + rand_dom + "' value='add' name='action' />" +
-                            "<label  class='btn btn-outline-primary' for='add" + rand_dom + "'>Add</label>" +
-                            "<input type='radio'  class='btn-check' id='remove" + rand_dom + "' value='remove' name='action' />" +
-                            "<label  class='btn btn-outline-primary' for='remove" + rand_dom + "'>Remove</label> " +
-                        "</div> " +
+                            "<input type='radio'  class='btn-check' id='add" + rand_dom + "' value='add_time' name='action' />" +
+                            "<label  class='btn btn-outline-primary' for='add" + rand_dom + "'>Add Time</label>" +
+                            "<input type='radio'  class='btn-check' id='remove" + rand_dom + "' value='remove_time' name='action' />" +
+                            "<label  class='btn btn-outline-primary' for='remove" + rand_dom + "'>Remove Time</label> " +
+                            "<input type='radio'  class='btn-check' id='addplay" + rand_dom + "' value='add_playtime' name='action' />" +
+                            "<label  class='btn btn-outline-primary' for='addplay" + rand_dom + "'>Add Play</label>" +
+                            "<input type='radio'  class='btn-check' id='removeplay" + rand_dom + "' value='remove_playtime' name='action' />" +
+                            "<label  class='btn btn-outline-primary' for='removeplay" + rand_dom + "'>Remove Play</label> " +
+                        "</div><br />" +
                         "<div class='btn-group' role='group' aria-label='Times'>" +
                             times +
-                        "</div>" +
+                        "</div><br />" +
                         "<div class='btn-group' role='group' aria-label='save'>" +
                             "<button class='btn btn-outline-primary save_me' " +
                                 "value='save' user='" + user + "' computer='" + computer + "' >Save</button>" +
@@ -207,7 +213,7 @@
 
                 $('#' + user  + rand_dom + " .notify").show().html("Loading...");
                 $('#' + user + rand_dom + ' .btn').addClass("disabled");
-                $('#' + user  + rand_dom + ' .btn-check').addClass("disabled");
+                $('#' + user + rand_dom + ' .btn-check').addClass("disabled");
 
                 setInterval(function () {
                     $('#' + user  + rand_dom + " .loading").fadeIn(1300).fadeOut(1300);
@@ -222,7 +228,7 @@
             const second_options = [300, 900, 1800, 2700, 3600];
             let times = '';
             $.each(second_options, function (index, seconds) {
-                times = times + "<input type='radio'  class='btn-check'  value='" + seconds + "' id='" + seconds +  rand_dom + "' name='seconds' />" +
+                times = times + "<input type='radio'  class='btn-check' value='" + seconds + "' id='" + seconds +  rand_dom + "' name='seconds' />" +
                     "<label  class='btn btn-outline-primary' for='" + seconds  +  rand_dom +  "'>" + secondsToHms(seconds) + "</label>";
             });
             return times;
@@ -241,14 +247,18 @@
                 const seconds = $( '#' + user + rand_dom + ' input[name="seconds"]:checked').val();
                 if(action !== undefined && seconds !== undefined){
                     $('input').prop('checked', false);
-                    add_or_remove_time(user, computer, action, seconds, rand_dom);
+                    if (action === 'add_time' || action === 'remove_time') {
+                        add_or_remove_time(user, computer, action, seconds, rand_dom);
+                    } else if (action === 'add_playtime' || action === 'remove_playtime') {
+                        add_or_remove_playtime(user, computer, action, seconds, rand_dom);
+                    }
                     $( '#' + user + rand_dom + ' .notify').html('Updated!').fadeIn(function() {
                         setTimeout(function() {
                             $('#' + user + rand_dom + ' .notify').fadeOut("slow");
                         }, 1000);
                     });
                 } else {
-                    alert("Choose 'Add' or 'Remove' and choose an amount of time to add.");
+                    alert("Choose an action and an amount of time to add.");
                 }
             });
         }
@@ -262,6 +272,8 @@
                 });
                 $('#' + user + rand_dom + " .time_left").html(secondsToHms(usage.time_left));
                 $('#' + user + rand_dom + " .time_spent").html(secondsToHms(usage.time_spent));
+                $('#' + user + rand_dom + " .playtime_left").html(secondsToHms(usage.playtime_left));
+                $('#' + user + rand_dom + " .playtime_spent").html(secondsToHms(usage.playtime_spent));
                 $('#' + user + rand_dom + " .loading").removeClass('loading');
                 $('#' + user + rand_dom + ' .btn').removeClass("disabled");
                 $('#' + user + rand_dom + ' .btn-check').removeClass("disabled");
@@ -278,7 +290,7 @@
 
         function add_or_remove_time(user, computer, action, seconds, rand_dom){
             let form;
-            if(action === 'add'){
+            if(action === 'add_time'){
                 form = 'increase_time'
             } else {
                 form = 'decrease_time'
@@ -286,6 +298,19 @@
             $.getJSON("/" + form + "/" + computer + "/" + user + "/" + seconds, function( data ) {
                 $('#' + user + rand_dom + " .time_left").html(secondsToHms(data.time_left));
                 $('#' + user + rand_dom + " .time_spent").html(secondsToHms(data.time_spent));
+            });
+        }
+
+        function add_or_remove_playtime(user, computer, action, seconds, rand_dom){
+            let form;
+            if(action === 'add_playtime'){
+                form = 'increase_playtime'
+            } else {
+                form = 'decrease_playtime'
+            }
+            $.getJSON("/" + form + "/" + computer + "/" + user + "/" + seconds, function( data ) {
+                $('#' + user + rand_dom + " .playtime_left").html(secondsToHms(data.playtime_left));
+                $('#' + user + rand_dom + " .playtime_spent").html(secondsToHms(data.playtime_spent));
             });
         }
 
