@@ -1,12 +1,29 @@
-[tool.poetry]
+[project]
 name = "timekpr-next-remote"
 version = "0.1.0"
 description = "Remote control for Timekpr-nExT via web interface"
-authors = ["mrjones", "xkonni"]
+authors = [
+    {name = "mrjones"},
+    {name = "xkonni"}
+]
+requires-python = ">=3.9,<4.0"
+dependencies = [
+    "fabric",
+    "paramiko",
+    "flask",
+    "gotify",
+    "humanize",
+    "pyyaml",
+]
+
+[project.scripts]
+timekpr-next-web = "timekpr.timekpr_next_web:main"
+
+[tool.poetry]
 packages = [{include = "timekpr"}]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+python = ">=3.9,<4.0"
 fabric = "*"
 paramiko = "*"
 flask = "*"
@@ -22,12 +39,9 @@ isort = "*"
 tox = "*"
 pytest = "*"
 
-[tool.poetry.scripts]
-timekpr-next-web = "timekpr.timekpr_next_web:main"
-
 [tool.black]
 line-length = 127
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py39', 'py310', 'py311', 'py312', 'py313']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
