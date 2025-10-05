@@ -36,9 +36,14 @@ As of 1.3.0, alerts can be sent when ever time is added or removed. This is a di
 
 Assuming your user is named "Adnan", and they added 15 minutes and had 1 hours and 2 minutes left, the alert would look like this:
 
-> **Timekpr: Adnan added 15 minutes**
+> **Timekpr: Adnan added 15 minutes time**
 >
-> removed 15 minutes, 1 hours and 2 minutes remaining :)
+> added 15 minutes time, time 4500 unused, 0 used, playtime 1800 unused, 0 used
+
+> **Timekpr: Adnan removed 15 minutes play**
+>
+> removed 15 minutes play, time 4500 unused, 0 used, playtime 900 unused, 0 used
+
 
 ## Install
 

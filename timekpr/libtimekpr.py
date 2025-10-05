@@ -39,7 +39,7 @@ def send_alert(user, action, seconds, computer, ssh, type):
                 playtime_used = humanize.precisedelta(usage["playtime_spent"])
                 result = gotify.create_message(
                     f"{action} {added} {type}, time {time_unused} unused, {time_used} used, playtime {playtime_unused} unused, {playtime_used} used",
-                    title=f"Timekpr: {user} {action} time",
+                    title=f"Timekpr: {user} {action} {added} {type}",
                     priority=2,
                 )
             except Exception as e:
